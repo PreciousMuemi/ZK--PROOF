@@ -1,4 +1,5 @@
 # ML Model Specification: Signal Quality Classification
+
 ## Week 3 - AI Relevance Model
 
 **Objective**: Build lightweight ML model to classify anonymized activity signals as high-signal (meaningful) or low-signal (low-value)
@@ -16,6 +17,7 @@
 ## 1. Problem Definition
 
 ### Classification Task
+
 ```
 Input: Anonymized signal bundle
 ├── Topic signals (10 features)
@@ -31,6 +33,7 @@ Output: Classification + confidence score
 ### Label Definition
 
 **HIGH-SIGNAL** (1): Signal indicates meaningful user engagement
+
 - User spent significant time (>30s)
 - Content matched user interests (topic alignment > 0.6)
 - Explicit engagement action (click, scroll, share, not just view)
@@ -38,6 +41,7 @@ Output: Classification + confidence score
 - Topic depth progression (visited similar topics multiple times)
 
 **LOW-SIGNAL** (0): Signal indicates low-value or accidental engagement
+
 - User abandoned quickly (<5s)
 - Content topic mismatch (user doesn't typically read this category)
 - Passive engagement only (view without interaction)
@@ -45,6 +49,7 @@ Output: Classification + confidence score
 - Topic bounce (clicked then immediately left category)
 
 ### Dataset Statistics (Typical)
+
 ```
 Total signals labeled: 100,000+
 ├─ High-signal: 40,000 (40%)
@@ -78,23 +83,23 @@ class SignalQualityModel:
         )
         self.feature_scaler = StandardScaler()
         self.feature_names = None
-    
+
     def train(self, X_train, y_train):
         """Train on anonymized features"""
         X_scaled = self.feature_scaler.fit_transform(X_train)
         self.model.fit(X_scaled, y_train)
         self.feature_names = X_train.columns.tolist()
-    
+
     def predict(self, X):
         """Predict signal quality (0 or 1)"""
         X_scaled = self.feature_scaler.transform(X)
         return self.model.predict(X_scaled)
-    
+
     def predict_proba(self, X):
         """Predict with confidence scores"""
         X_scaled = self.feature_scaler.transform(X)
         return self.model.predict_proba(X_scaled)
-    
+
     def feature_importance(self):
         """Which features matter most?"""
         importance_df = pd.DataFrame({
@@ -105,6 +110,7 @@ class SignalQualityModel:
 ```
 
 **Advantages**:
+
 - Fast training (seconds)
 - Fast inference (1-5ms per signal)
 - Interpretable feature importance
@@ -114,6 +120,7 @@ class SignalQualityModel:
 - Battle-tested in production
 
 **Disadvantages**:
+
 - Less flexible than neural networks
 - Requires feature engineering
 
@@ -146,26 +153,28 @@ class SignalQualityNN(nn.Module):
             nn.Linear(16, 1),           # Output layer
             nn.Sigmoid()                # Binary classification
         )
-    
+
     def forward(self, x):
         return self.network(x)
-    
+
     def predict(self, x_tensor):
         with torch.no_grad():
             output = self.forward(x_tensor)
             return (output > 0.5).int()
-    
+
     def predict_proba(self, x_tensor):
         with torch.no_grad():
             return self.forward(x_tensor)
 ```
 
 **Advantages**:
+
 - Captures complex non-linear patterns
 - Can be compressed/quantized for edge deployment
 - Handles dynamic input sizes
 
 **Disadvantages**:
+
 - Requires more data to train well
 - Harder to interpret decisions
 - Needs validation to prevent overfitting
@@ -179,6 +188,7 @@ class SignalQualityNN(nn.Module):
 ### Input Features (29 total)
 
 #### Topic Features (10)
+
 ```python
 topic_features = {
     'primary_topic_code': int,              # 0-9 (Technology, Science, etc.)
@@ -195,6 +205,7 @@ topic_features = {
 ```
 
 #### Engagement Features (8)
+
 ```python
 engagement_features = {
     'engagement_duration_bin': int,         # 1-5 (Skimmed to Deep Read)
@@ -209,6 +220,7 @@ engagement_features = {
 ```
 
 #### Interaction Features (6)
+
 ```python
 interaction_features = {
     'has_explicit_action': bool,            # 1 if click/share/comment
@@ -221,6 +233,7 @@ interaction_features = {
 ```
 
 #### Quality & Derived Features (5)
+
 ```python
 quality_features = {
     'quality_score': float,                 # 0-1 (aggregated quality metrics)
@@ -237,18 +250,18 @@ quality_features = {
 def prepare_features(raw_signal: dict) -> pd.DataFrame:
     """
     Convert anonymized signal bundle to model features
-    
+
     Input: {
         'topic_signals': {...},
         'engagement_signals': {...},
         'interaction_signals': {...},
         'quality_signals': {...}
     }
-    
+
     Output: DataFrame with 29 features ready for model
     """
     features = {}
-    
+
     # Topic features
     features['primary_topic_code'] = map_topic_to_code(
         raw_signal['topic_signals']['primary_topic']
@@ -260,7 +273,7 @@ def prepare_features(raw_signal: dict) -> pd.DataFrame:
         'topic_affinity', 0.5
     )
     # ... continue for all 29 features
-    
+
     return pd.DataFrame([features])
 
 # Feature transformations
@@ -268,7 +281,7 @@ def normalize_features(X: pd.DataFrame) -> pd.DataFrame:
     """Normalize continuous features to 0-1 range"""
     continuous_cols = [
         'topic_affinity_score', 'creator_authority_score',
-        'engagement_intensity', 'return_probability', 
+        'engagement_intensity', 'return_probability',
         'social_action_weight', 'quality_score', 'niche_fit',
         'consistency_score', 'predicted_helpfulness', 'content_type_match'
     ]
@@ -287,17 +300,17 @@ def normalize_features(X: pd.DataFrame) -> pd.DataFrame:
 ```python
 class SignalQualityTrainer:
     """End-to-end training pipeline"""
-    
+
     def __init__(self):
         self.model = SignalQualityModel()
         self.results = {}
-    
+
     def load_data(self, path: str):
         """Load labeled signal data"""
         df = pd.read_csv(path)
         X = df.drop('label', axis=1)
         y = df['label']
-        
+
         # Train/val/test split: 70/15/15
         X_train, X_temp, y_train, y_temp = train_test_split(
             X, y, test_size=0.3, random_state=42, stratify=y
@@ -305,35 +318,35 @@ class SignalQualityTrainer:
         X_val, X_test, y_val, y_test = train_test_split(
             X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp
         )
-        
+
         return X_train, X_val, X_test, y_train, y_val, y_test
-    
+
     def train(self, X_train, y_train, X_val, y_val):
         """Train model and monitor validation performance"""
         print("Training signal quality model...")
-        
+
         self.model.train(X_train, y_train)
-        
+
         # Validation performance
         y_pred = self.model.predict(X_val)
         y_proba = self.model.predict_proba(X_val)
-        
+
         self.results['val_accuracy'] = accuracy_score(y_val, y_pred)
         self.results['val_precision'] = precision_score(y_val, y_pred)
         self.results['val_recall'] = recall_score(y_val, y_pred)
         self.results['val_f1'] = f1_score(y_val, y_pred)
         self.results['val_roc_auc'] = roc_auc_score(y_val, y_proba[:, 1])
-        
+
         print(f"Validation Accuracy: {self.results['val_accuracy']:.3f}")
         print(f"Validation ROC-AUC: {self.results['val_roc_auc']:.3f}")
-        
+
         return self.model
-    
+
     def evaluate(self, X_test, y_test):
         """Final evaluation on held-out test set"""
         y_pred = self.model.predict(X_test)
         y_proba = self.model.predict_proba(X_test)
-        
+
         results = {
             'accuracy': accuracy_score(y_test, y_pred),
             'precision': precision_score(y_test, y_pred),
@@ -341,14 +354,14 @@ class SignalQualityTrainer:
             'f1': f1_score(y_test, y_pred),
             'roc_auc': roc_auc_score(y_test, y_proba[:, 1]),
         }
-        
+
         # Confusion matrix
         cm = confusion_matrix(y_test, y_pred)
         results['true_negatives'] = cm[0, 0]
         results['false_positives'] = cm[0, 1]
         results['false_negatives'] = cm[1, 0]
         results['true_positives'] = cm[1, 1]
-        
+
         return results
 ```
 
@@ -388,29 +401,29 @@ nn_params = {
 
 ### Accuracy Metrics
 
-| Metric | Target | Rationale |
-|--------|--------|-----------|
-| **ROC-AUC** | > 0.85 | Can distinguish signal quality |
+| Metric        | Target | Rationale                                        |
+| ------------- | ------ | ------------------------------------------------ |
+| **ROC-AUC**   | > 0.85 | Can distinguish signal quality                   |
 | **Precision** | > 0.80 | When model says "high-signal", it's correct 80%+ |
-| **Recall** | > 0.75 | Catches 75%+ of actual high-signal items |
-| **F1-Score** | > 0.77 | Balanced precision/recall |
-| **Accuracy** | > 0.78 | Overall correctness |
+| **Recall**    | > 0.75 | Catches 75%+ of actual high-signal items         |
+| **F1-Score**  | > 0.77 | Balanced precision/recall                        |
+| **Accuracy**  | > 0.78 | Overall correctness                              |
 
 ### Inference Performance
 
-| Target | Value | Rationale |
-|--------|-------|-----------|
-| **Latency** | < 100ms | Real-time recommendations |
-| **Throughput** | > 1000 signals/sec | Handle concurrent users |
-| **Memory** | < 100MB | Can fit in memory/cache |
-| **Model Size** | < 50MB | Can ship in updates |
+| Target         | Value              | Rationale                 |
+| -------------- | ------------------ | ------------------------- |
+| **Latency**    | < 100ms            | Real-time recommendations |
+| **Throughput** | > 1000 signals/sec | Handle concurrent users   |
+| **Memory**     | < 100MB            | Can fit in memory/cache   |
+| **Model Size** | < 50MB             | Can ship in updates       |
 
 ### Data Balance
 
-| Class | Target | Why |
-|-------|--------|-----|
-| High-Signal | ~40% | Realistic platform distribution |
-| Low-Signal | ~60% | Natural skew towards low engagement |
+| Class       | Target | Why                                 |
+| ----------- | ------ | ----------------------------------- |
+| High-Signal | ~40%   | Realistic platform distribution     |
+| Low-Signal  | ~60%   | Natural skew towards low engagement |
 
 ---
 
@@ -472,7 +485,7 @@ def interpret_prediction(signal: dict, model_prediction: dict) -> str:
     explanation = f"""
     Signal Classification: {'HIGH-SIGNAL' if model_prediction['prediction'] else 'LOW-SIGNAL'}
     Confidence: {model_prediction['confidence']:.1%}
-    
+
     Key Factors:
     - Duration engagement: {signal['engagement_duration_bin']}/5
     - Topic fit: {signal['topic_affinity_score']:.0%}
@@ -603,6 +616,7 @@ Model outputs are safe:
 ## 11. Success Criteria
 
 **Model is successful if**:
+
 - ✅ ROC-AUC > 0.85 on test set
 - ✅ Inference latency < 100ms per signal
 - ✅ Correctly identifies 75%+ of high-signal items (recall > 0.75)
@@ -621,4 +635,3 @@ Model outputs are safe:
 3. **Integrate**: Wire into relevance engine (INTEGRATION_GUIDE.md)
 4. **Monitor**: Track performance in production
 5. **Iterate**: Retrain with new signals monthly
-

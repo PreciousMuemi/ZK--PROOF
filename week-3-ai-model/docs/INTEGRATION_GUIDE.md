@@ -1,9 +1,11 @@
 # Integration Guide
+
 ## Wiring Signal Quality Model into Week 1-2 System
 
 **Objective**: Integrate trained ML model into the complete relevance engine
 
-**Integration Points**: 
+**Integration Points**:
+
 - Signal processing pipeline
 - Feature extraction layer
 - Ranking/scoring system
@@ -76,7 +78,7 @@ Personalize & Deliver
 signal = {
     'signal_id': 'sig_abc123',
     'timestamp_bin': 'afternoon',
-    
+
     'topic_signals': {
         'primary_topic': 'Technology',
         'secondary_topics': ['AI', 'ML'],
@@ -89,7 +91,7 @@ signal = {
         'topic_diversity_score': 0.62,
         'content_format': 'article',
     },
-    
+
     'engagement_signals': {
         'duration_bin': 4,
         'frequency_bin': 3,
@@ -100,7 +102,7 @@ signal = {
         'session_depth': 5,
         'completion_rate': 0.85,
     },
-    
+
     'interaction_signals': {
         'has_click': True,
         'num_interactions': 2,
@@ -109,7 +111,7 @@ signal = {
         'shared': False,
         'comment_length_bin': 0,
     },
-    
+
     'quality_signals': {
         'content_quality_score': 0.78,
         'niche_fit': 0.81,
@@ -193,36 +195,36 @@ class SignalProcessor:
     """
     Complete signal processing: anonymize → validate → classify
     """
-    
+
     def __init__(self, model_path: str, scaler_path: str):
         """Initialize with trained model and scaler"""
         self.model = joblib.load(model_path)
         self.scaler = joblib.load(scaler_path)
         self.feature_extractor = FeatureExtractor()
-        
+
         print("✅ Initialized SignalProcessor with trained model")
-    
+
     def process(self, signal: Dict) -> Dict:
         """
         Complete signal processing pipeline
-        
+
         Input: Raw signal from Week 2 validation
         Output: Signal with quality classification
         """
         try:
             # Step 1: Extract 29 features
             features = self.feature_extractor.extract(signal)
-            
+
             # Step 2: Normalize
             X_normalized = self.feature_extractor.normalize(
                 pd.DataFrame([features])
             )
-            
+
             # Step 3: Classify
             X_array = X_normalized.values
             prediction = self.model.predict(X_array)[0]
             proba = self.model.predict_proba(X_array)[0]
-            
+
             # Step 4: Augment signal
             signal_with_quality = {
                 **signal,
@@ -232,9 +234,9 @@ class SignalProcessor:
                     'quality_score': float(proba[1]),  # P(HIGH-signal)
                 }
             }
-            
+
             return signal_with_quality
-            
+
         except Exception as e:
             # Log error, return signal without quality (fail gracefully)
             print(f"⚠️  Error processing signal {signal.get('signal_id')}: {e}")
@@ -244,19 +246,19 @@ class SignalProcessor:
                 'quality_score': 0.5,  # Neutral default
             }
             return signal
-    
+
     def process_batch(self, signals: list) -> list:
         """
         Process multiple signals efficiently
-        
+
         Batch processing is faster than individual signals
         """
         processed = []
-        
+
         for signal in signals:
             processed_signal = self.process(signal)
             processed.append(processed_signal)
-        
+
         return processed
 
 # Usage in relevance engine
@@ -279,11 +281,13 @@ signals_with_quality = processor.process_batch(signals)
 ### 4.1 Updated Relevance Score
 
 Before (Week 1):
+
 ```python
 relevance_score = topic_affinity * 0.7 + freshness * 0.3
 ```
 
 After (Week 3):
+
 ```python
 def compute_relevance_score(signal_with_quality: Dict) -> float:
     """
@@ -293,25 +297,25 @@ def compute_relevance_score(signal_with_quality: Dict) -> float:
     topic_affinity = signal_with_quality['topic_signals']['topic_affinity']
     quality_score = signal_with_quality['quality_classification']['quality_score']
     freshness = signal_with_quality['topic_signals']['content_freshness_bin'] / 5
-    
+
     # Weights
     w_topic = 0.50      # Topic affinity
     w_quality = 0.35    # Quality classification
     w_freshness = 0.15  # Freshness
-    
+
     # Compute final score
     score = (
         topic_affinity * w_topic +
         quality_score * w_quality +
         freshness * w_freshness
     )
-    
+
     # Boost high-signal, suppress low-signal
     if signal_with_quality['quality_classification']['class'] == 'HIGH-signal':
         score = score * 1.2  # 20% boost
     else:
         score = score * 0.8  # 20% suppression
-    
+
     return score
 
 # Usage
@@ -321,7 +325,7 @@ relevance_score = compute_relevance_score(signal_with_quality)
 ### 4.2 Filtering & Ranking
 
 ```python
-def rank_and_filter(signals_with_quality: list, 
+def rank_and_filter(signals_with_quality: list,
                    top_k: int = 10,
                    quality_threshold: float = 0.5) -> list:
     """
@@ -332,19 +336,19 @@ def rank_and_filter(signals_with_quality: list,
         s for s in signals_with_quality
         if s['quality_classification']['confidence'] >= 0.7
     ]
-    
+
     # Score each signal
     scored_signals = [
         (compute_relevance_score(s), s)
         for s in high_confidence
     ]
-    
+
     # Sort by relevance (descending)
     scored_signals.sort(key=lambda x: x[0], reverse=True)
-    
+
     # Return top K
     top_signals = [s for _, s in scored_signals[:top_k]]
-    
+
     return top_signals
 ```
 
@@ -416,17 +420,17 @@ WHERE quality_confidence < 0.60
 ```python
 class QualityModelMonitor:
     """Monitor model performance in production"""
-    
+
     def __init__(self, db_connection):
         self.db = db_connection
-    
+
     def check_performance(self, days_back: int = 7):
         """
         Check if model predictions align with actual user behavior
         """
         # Get recent signals with labels
         query = f"""
-        SELECT 
+        SELECT
             signal_id,
             quality_score,
             quality_class,
@@ -436,32 +440,32 @@ class QualityModelMonitor:
         WHERE classified_at >= DATE_SUB(NOW(), INTERVAL {days_back} DAY)
           AND user_engagement_score IS NOT NULL
         """
-        
+
         results = pd.read_sql(query, self.db)
-        
+
         # Compare predictions vs actual
         # If user engaged with LOW-signal: model error
         # If user ignored HIGH-signal: model error
-        
+
         errors = []
         for idx, row in results.iterrows():
             predicted_high = row['quality_class'] == 'HIGH-signal'
             actual_high = row['user_engagement_score'] > 0.5
-            
+
             if predicted_high != actual_high:
                 errors.append(row)
-        
+
         error_rate = len(errors) / len(results)
-        
+
         print(f"Quality model accuracy: {(1 - error_rate):.1%}")
-        
+
         if error_rate > 0.25:  # >25% error
             print("🚨 ALERT: High error rate, trigger retraining")
             return False
         else:
             print("✅ Model performing well")
             return True
-    
+
     def identify_retrain_signals(self) -> list:
         """
         Find signals to include in next training data
@@ -472,10 +476,10 @@ class QualityModelMonitor:
         WHERE quality_confidence < 0.60
           AND classified_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         """
-        
+
         retrain_signals = pd.read_sql(query, self.db)
         print(f"Found {len(retrain_signals)} signals to retrain on")
-        
+
         return retrain_signals['signal_id'].tolist()
 
 # Usage
@@ -493,16 +497,16 @@ def schedule_retraining(schedule_type: str = 'weekly'):
     """
     import schedule
     import time
-    
+
     def retrain_job():
         print("Starting scheduled retraining...")
-        
+
         # 1. Collect new labeled signals
         new_signals = collect_labeled_signals(days=7)
-        
+
         # 2. Run training pipeline
         model, metrics = train_model(new_signals)
-        
+
         # 3. Validate new model
         if metrics['roc_auc'] >= 0.85:
             # 4. Deploy new model
@@ -510,12 +514,12 @@ def schedule_retraining(schedule_type: str = 'weekly'):
             print("✅ New model deployed")
         else:
             print("❌ New model below performance targets, not deploying")
-    
+
     if schedule_type == 'weekly':
         schedule.every().sunday.at("02:00").do(retrain_job)
     elif schedule_type == 'daily':
         schedule.every().day.at("02:00").do(retrain_job)
-    
+
     # Run scheduler
     while True:
         schedule.run_pending()
@@ -544,12 +548,12 @@ processor = SignalProcessor('models/signal_quality_model.pkl',
 def classify_signal():
     """
     Endpoint: POST /api/v1/classify-signal
-    
+
     Request:
     {
         "signal": {...signal object from Week 2...}
     }
-    
+
     Response:
     {
         "signal_id": "sig_abc123",
@@ -561,20 +565,20 @@ def classify_signal():
     try:
         data = request.json
         signal = data.get('signal')
-        
+
         # Process signal
         signal_with_quality = processor.process(signal)
-        
+
         # Extract classification
         quality_info = signal_with_quality['quality_classification']
-        
+
         return jsonify({
             'signal_id': signal['signal_id'],
             'quality_class': quality_info['class'],
             'quality_confidence': quality_info['confidence'],
             'quality_score': quality_info['quality_score'],
         }), 200
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
@@ -586,10 +590,10 @@ def classify_batch():
     try:
         data = request.json
         signals = data.get('signals', [])
-        
+
         # Process batch
         signals_with_quality = processor.process_batch(signals)
-        
+
         # Extract classifications
         results = []
         for s in signals_with_quality:
@@ -600,9 +604,9 @@ def classify_batch():
                 'quality_confidence': q['confidence'],
                 'quality_score': q['quality_score'],
             })
-        
+
         return jsonify({'results': results}), 200
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
@@ -677,20 +681,20 @@ def rollback_to_previous_model():
     """
     # 1. Stop using new model
     processor.model = load_previous_model_version()
-    
+
     # 2. Alert operations team
     send_alert("Model rolled back to v1.2")
-    
+
     # 3. Investigate issue
     # - Check error logs
     # - Compare predictions with v1.2
     # - Identify bad signals
-    
+
     # 4. Retrain with fixes
     # - Add identified bad signals to training data
     # - Retrain model
     # - Validate improvements
-    
+
     # 5. Deploy fixed version
     # - Test on staging
     # - Gradual rollout (10% → 50% → 100%)
@@ -708,4 +712,3 @@ print("✅ Rollback procedure defined and tested")
 3. → **Deploy to production** - Week 4
 4. → **Monitor performance** - Ongoing
 5. → **Retrain monthly** - Ongoing
-

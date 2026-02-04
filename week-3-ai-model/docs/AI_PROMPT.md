@@ -1,4 +1,5 @@
 # AI Relevance Model - Week 3 Response
+
 ## Response to Week 3 AI Prompt
 
 **Prompt**: "Help me build a lightweight ML model that classifies platform activity as high-signal or low-signal using anonymized engagement features."
@@ -32,6 +33,7 @@ This week's deliverables provide a **production-ready lightweight ML classificat
 ### Model Choice: XGBoost (Gradient Boosting)
 
 **Why XGBoost**:
+
 ```
 Feature: Gradient Boosting
 ├── ✅ Fast training (seconds on 100K signals)
@@ -53,6 +55,7 @@ vs. Neural Network:
 ### Features: 29 Anonymized Indicators
 
 **No PII Risk**:
+
 ```
 Features are all derived from Week 2 signals:
 ├── 10 Topic Features (categories only, not specific titles)
@@ -88,6 +91,7 @@ Output: Classification + Confidence
 ```
 
 **Key Properties**:
+
 - **Input**: 29 features in predictable format
 - **Output**: Single binary classification + confidence
 - **Inference**: <10ms latency per signal
@@ -144,6 +148,7 @@ Class imbalance handled via:
 ### 5-Step Process
 
 **Step 1: Data Preparation** (5 minutes)
+
 ```python
 load_training_data('signals_labeled.csv')  # 100K+ labeled signals
 train_test_split(stratified=True)          # 70/15/15 split
@@ -151,12 +156,14 @@ normalize_features()                       # Standardize continuous
 ```
 
 **Step 2: Class Weight Computation** (1 minute)
+
 ```python
 compute_class_weights()  # Handle 40/60 imbalance
                         # Output: weights for XGBoost
 ```
 
 **Step 3: Model Training** (15-20 minutes)
+
 ```python
 model = XGBClassifier(
     n_estimators=100,      # Boosting rounds
@@ -170,6 +177,7 @@ model.fit(X_train, y_train,
 ```
 
 **Step 4: Evaluation** (5 minutes)
+
 ```python
 evaluate_model()         # Compute metrics
 plot_confusion_matrix()  # Visualize performance
@@ -178,6 +186,7 @@ plot_feature_importance() # Which features matter?
 ```
 
 **Step 5: Save & Export** (1 minute)
+
 ```python
 save_model(model, scaler)  # Pickle for production
 save_metadata()            # Feature names, importance
@@ -228,6 +237,7 @@ Each feature validated for privacy:
 ### How Model Maintains Privacy
 
 **At Training Time**:
+
 ```
 ✅ Training data is AGGREGATED signals from 1000+ users
 ✅ Each signal is anonymized (Week 2 validation)
@@ -237,6 +247,7 @@ Each feature validated for privacy:
 ```
 
 **At Inference Time**:
+
 ```
 ✅ Model operates on single anonymized signal
 ✅ Output is just "HIGH" or "LOW" label
@@ -246,6 +257,7 @@ Each feature validated for privacy:
 ```
 
 **Model-Level Privacy**:
+
 ```
 ❌ Model does NOT output user IDs
 ❌ Model does NOT output personal attributes
@@ -304,6 +316,7 @@ Anonymized Signal Bundle (from Week 2)
 ## Implementation Roadmap
 
 ### Phase 1: Development (Week 3)
+
 ```
 ✅ MODEL SPECIFICATION.md      - Architecture defined
 ✅ FEATURE_ENGINEERING.md      - 29-feature pipeline
@@ -315,6 +328,7 @@ Anonymized Signal Bundle (from Week 2)
 ```
 
 ### Phase 2: Training (1 week)
+
 ```
 1. Collect 100K+ labeled signal bundles
 2. Run training pipeline (30 minutes)
@@ -324,6 +338,7 @@ Anonymized Signal Bundle (from Week 2)
 ```
 
 ### Phase 3: Validation (1 week)
+
 ```
 1. Test on holdout signals (Week 2 validation)
 2. Run privacy attack simulations
@@ -333,6 +348,7 @@ Anonymized Signal Bundle (from Week 2)
 ```
 
 ### Phase 4: Production (ongoing)
+
 ```
 1. Deploy model to serve inference requests
 2. Monitor performance metrics weekly
@@ -367,20 +383,20 @@ Anonymized Signal Bundle (from Week 2)
 
 ## Quick Facts
 
-| Aspect | Value |
-|--------|-------|
-| **Model Type** | Binary Classifier (XGBoost) |
-| **Features** | 29 (all anonymized) |
-| **Training Data** | 100K+ labeled signals |
-| **Training Time** | ~30 minutes |
-| **Inference Latency** | <10ms per signal |
-| **Model Size** | ~50MB |
-| **ROC-AUC Target** | >0.85 |
-| **Precision Target** | >0.80 |
-| **Recall Target** | >0.75 |
-| **Privacy Risk** | None (features are binned/aggregated) |
-| **GPU Required?** | No (CPU-only) |
-| **Production Ready?** | Yes (all code examples provided) |
+| Aspect                | Value                                 |
+| --------------------- | ------------------------------------- |
+| **Model Type**        | Binary Classifier (XGBoost)           |
+| **Features**          | 29 (all anonymized)                   |
+| **Training Data**     | 100K+ labeled signals                 |
+| **Training Time**     | ~30 minutes                           |
+| **Inference Latency** | <10ms per signal                      |
+| **Model Size**        | ~50MB                                 |
+| **ROC-AUC Target**    | >0.85                                 |
+| **Precision Target**  | >0.80                                 |
+| **Recall Target**     | >0.75                                 |
+| **Privacy Risk**      | None (features are binned/aggregated) |
+| **GPU Required?**     | No (CPU-only)                         |
+| **Production Ready?** | Yes (all code examples provided)      |
 
 ---
 
@@ -457,7 +473,7 @@ week-3-ai-model/
    - Add feature extraction
    - Test end-to-end
 
-4. **Production** 
+4. **Production**
    - Deploy model
    - Monitor metrics
    - Retrain regularly
@@ -469,4 +485,3 @@ week-3-ai-model/
 **System Status**: ✅ READY FOR IMPLEMENTATION
 
 All documentation, code examples, and integration guides are complete. Ready to proceed to training phase.
-

@@ -1,4 +1,5 @@
 # Feature Engineering for Signal Quality Classification
+
 ## Converting Anonymized Signals to Model Features
 
 **Objective**: Transform anonymized signal bundles into 29 machine-learning features while maintaining privacy
@@ -17,7 +18,7 @@ Expected input from Week 2 signal validation:
 signal_bundle = {
     'signal_id': 'sig_xyz123',              # Ephemeral ID only
     'timestamp_bin': 'afternoon',           # Binned, not exact time
-    
+
     'topic_signals': {
         'primary_topic': 'Technology',      # Category only
         'secondary_topics': ['AI', 'ML'],   # 0-3 topics
@@ -30,7 +31,7 @@ signal_bundle = {
         'topic_diversity_score': 0.62,      # 0-1 user variety
         'content_format': 'article',        # Type: article/video/podcast
     },
-    
+
     'engagement_signals': {
         'duration_bin': 4,                  # 1-5: Skimmed to Deep Read
         'frequency_bin': 3,                 # 1-5: How often user engages this topic
@@ -41,7 +42,7 @@ signal_bundle = {
         'session_depth': 5,                 # 1-10: Items in session
         'completion_rate': 0.85,            # 0-1: If consumable content
     },
-    
+
     'interaction_signals': {
         'has_click': True,                  # Any interaction?
         'num_interactions': 2,              # 1-5: Count of actions
@@ -50,7 +51,7 @@ signal_bundle = {
         'shared': False,                    # Boolean
         'comment_length_bin': 0,            # 0-3: 0=none, 1=short, 2=medium, 3=long
     },
-    
+
     'quality_signals': {
         'content_quality_score': 0.78,      # 0-1: Aggregated quality
         'niche_fit': 0.81,                  # 0-1: Niche alignment
@@ -71,7 +72,7 @@ signal_bundle = {
 def extract_topic_features(signal: dict) -> dict:
     """Extract 10 topic-related features"""
     topic_signals = signal['topic_signals']
-    
+
     features = {
         # Feature 1: Primary topic code
         'primary_topic_code': topic_code_mapping(
@@ -79,41 +80,41 @@ def extract_topic_features(signal: dict) -> dict:
         ),
         # 0=Technology, 1=Science, 2=Business, 3=Entertainment,
         # 4=Health, 5=Politics, 6=Sports, 7=Culture, 8=Education, 9=Other
-        
+
         # Feature 2: Count of secondary topics
         'num_secondary_topics': min(
             len(topic_signals.get('secondary_topics', [])), 3
         ),
         # Capped at 3 (max secondary topics)
-        
+
         # Feature 3: Topic affinity (user fit)
         'topic_affinity_score': topic_signals.get('topic_affinity', 0.5),
         # Raw 0-1 score, no transformation
-        
+
         # Feature 4: Content freshness
         'content_freshness_bin': topic_signals.get('content_freshness_bin', 3),
         # Already binned 1-5
-        
+
         # Feature 5: Content depth
         'content_depth_bin': topic_signals.get('content_depth_bin', 2),
         # Already binned 1-5
-        
+
         # Feature 6: Creator authority
         'creator_authority_score': topic_signals.get('creator_authority', 0.5),
         # Raw 0-1 score
-        
+
         # Feature 7: Is controversial
         'is_controversial': int(topic_signals.get('is_controversial', False)),
         # Convert boolean to 0/1
-        
+
         # Feature 8: Is educational
         'is_educational': int(topic_signals.get('is_educational', False)),
         # Convert boolean to 0/1
-        
+
         # Feature 9: Topic diversity
         'topic_diversity': topic_signals.get('topic_diversity_score', 0.5),
         # Raw 0-1 score
-        
+
         # Feature 10: Content type match
         'content_type_match': format_preference_score(
             topic_signals.get('content_format', 'article'),
@@ -121,7 +122,7 @@ def extract_topic_features(signal: dict) -> dict:
         ),
         # 0-1: How well format matches user preference
     }
-    
+
     return features
 
 def topic_code_mapping(topic_name: str) -> int:
@@ -147,43 +148,43 @@ def topic_code_mapping(topic_name: str) -> int:
 def extract_engagement_features(signal: dict) -> dict:
     """Extract 8 engagement-related features"""
     engagement_signals = signal['engagement_signals']
-    
+
     features = {
         # Feature 11: Engagement duration
         'engagement_duration_bin': engagement_signals.get('duration_bin', 2),
         # Already binned 1-5: Skimmed, Browsed, Read, Deep Read
-        
+
         # Feature 12: Topic engagement frequency
         'engagement_frequency_bin': engagement_signals.get('frequency_bin', 2),
         # Already binned 1-5: How often user engages
-        
+
         # Feature 13: Scroll depth (decile)
         'scroll_depth_bin': engagement_signals.get('scroll_depth_decile', 5),
         # Already binned 1-10
-        
+
         # Feature 14: Engagement intensity (normalized)
         'engagement_intensity': engagement_signals.get('engagement_intensity', 0.5),
         # Raw 0-1 score
-        
+
         # Feature 15: Return probability
         'return_probability': engagement_signals.get('return_probability', 0.5),
         # Raw 0-1: likelihood user returns to this topic
-        
+
         # Feature 16: Recency
         'recency_bin': engagement_signals.get('recency_bin', 2),
         # Already binned 1-4: Recent, Moderate, Old, Very Old
-        
+
         # Feature 17: Session depth
         'session_depth': min(
             engagement_signals.get('session_depth', 3), 10
         ),
         # Already binned 1-10, capped at 10
-        
+
         # Feature 18: Completion rate (for videos/articles)
         'completion_rate': engagement_signals.get('completion_rate', 0.5),
         # Raw 0-1: % of content consumed
     }
-    
+
     return features
 ```
 
@@ -193,41 +194,41 @@ def extract_engagement_features(signal: dict) -> dict:
 def extract_interaction_features(signal: dict) -> dict:
     """Extract 6 interaction-related features"""
     interaction_signals = signal['interaction_signals']
-    
+
     features = {
         # Feature 19: Has any explicit action
         'has_explicit_action': int(
             interaction_signals.get('has_click', False)
         ),
         # 0/1: Whether user took explicit action
-        
+
         # Feature 20: Number of interactions
         'num_interactions': min(
             interaction_signals.get('num_interactions', 0), 5
         ),
         # Already counted, capped at 5
-        
+
         # Feature 21: Social action weight
         'social_action_weight': interaction_signals.get('social_weight', 0.0),
         # Raw 0-1: Normalized social actions (like, share, comment)
-        
+
         # Feature 22: Bookmarked
         'bookmarked': int(
             interaction_signals.get('bookmarked', False)
         ),
         # 0/1: User saved content
-        
+
         # Feature 23: Shared
         'shared': int(
             interaction_signals.get('shared', False)
         ),
         # 0/1: User shared content
-        
+
         # Feature 24: Comment length
         'comment_length_bin': interaction_signals.get('comment_length_bin', 0),
         # Already binned 0-3: None, Short, Medium, Long
     }
-    
+
     return features
 ```
 
@@ -237,31 +238,31 @@ def extract_interaction_features(signal: dict) -> dict:
 def extract_quality_features(signal: dict) -> dict:
     """Extract 5 quality-related features"""
     quality_signals = signal['quality_signals']
-    
+
     features = {
         # Feature 25: Content quality score
         'quality_score': quality_signals.get('content_quality_score', 0.5),
         # Raw 0-1: Aggregated quality metrics
-        
+
         # Feature 26: Niche fit
         'niche_fit': quality_signals.get('niche_fit', 0.5),
         # Raw 0-1: How well content fits user's niche
-        
+
         # Feature 27: Exploration indicator
         'exploration_indicator': int(
             quality_signals.get('is_exploration', False)
         ),
         # 0/1: Is this a new topic for the user?
-        
+
         # Feature 28: Topic consistency
         'consistency_score': quality_signals.get('topic_consistency', 0.5),
         # Raw 0-1: Topic continuity (user sticks to interests)
-        
+
         # Feature 29: Predicted helpfulness
         'predicted_helpfulness': quality_signals.get('predicted_helpfulness', 0.5),
         # Raw 0-1: Content usefulness score
     }
-    
+
     return features
 ```
 
@@ -271,21 +272,21 @@ def extract_quality_features(signal: dict) -> dict:
 def extract_all_features(signal: dict, user_prefs: dict = None) -> pd.Series:
     """
     Extract all 29 features from signal bundle
-    
+
     Returns:
         pd.Series with 29 features, ready for model
     """
     features = {}
-    
+
     # Extract from each signal group
     features.update(extract_topic_features(signal))
     features.update(extract_engagement_features(signal))
     features.update(extract_interaction_features(signal))
     features.update(extract_quality_features(signal))
-    
+
     # Verify we have exactly 29 features
     assert len(features) == 29, f"Expected 29 features, got {len(features)}"
-    
+
     # Return as Series with proper ordering
     feature_order = [
         'primary_topic_code', 'num_secondary_topics', 'topic_affinity_score',
@@ -299,7 +300,7 @@ def extract_all_features(signal: dict, user_prefs: dict = None) -> pd.Series:
         'quality_score', 'niche_fit', 'exploration_indicator',
         'consistency_score', 'predicted_helpfulness'
     ]
-    
+
     return pd.Series({k: features[k] for k in feature_order})
 ```
 
@@ -315,7 +316,7 @@ These features are already in 0-1 range or need normalization:
 def normalize_continuous_features(X: pd.DataFrame) -> pd.DataFrame:
     """
     Normalize continuous features to 0-1 range
-    
+
     Ensures model receives consistent scale
     """
     continuous_cols = [
@@ -332,15 +333,15 @@ def normalize_continuous_features(X: pd.DataFrame) -> pd.DataFrame:
         'topic_diversity',                # Already 0-1
         'content_type_match',             # Already 0-1
     ]
-    
+
     X_normalized = X.copy()
     scaler = StandardScaler()
-    
+
     # Standardize continuous features
     X_normalized[continuous_cols] = scaler.fit_transform(
         X[continuous_cols]
     )
-    
+
     return X_normalized, scaler
 ```
 
@@ -390,7 +391,7 @@ boolean_cols = [
 def handle_missing_values(signal: dict) -> dict:
     """
     Fill missing signal fields with sensible defaults
-    
+
     This prevents crashes but should be rare
     (Week 2 validation should catch all missing required fields)
     """
@@ -406,10 +407,10 @@ def handle_missing_values(signal: dict) -> dict:
         'topic_consistency': 0.5,           # Unknown consistency
         'predicted_helpfulness': 0.5,       # Neutral helpfulness
     }
-    
+
     # Fill any missing fields with defaults
     filled_signal = deep_merge(signal, defaults)
-    
+
     return filled_signal
 
 # Never drop records due to missing values
@@ -426,12 +427,12 @@ def handle_missing_values(signal: dict) -> dict:
 def prepare_features_xgboost(X: pd.DataFrame) -> pd.DataFrame:
     """
     Prepare features for XGBoost
-    
+
     XGBoost handles feature scaling internally,
     but we normalize for consistency
     """
     X_prep = X.copy()
-    
+
     # Only normalize continuous features
     continuous_cols = [
         'topic_affinity_score', 'creator_authority_score',
@@ -440,10 +441,10 @@ def prepare_features_xgboost(X: pd.DataFrame) -> pd.DataFrame:
         'quality_score', 'niche_fit', 'consistency_score',
         'predicted_helpfulness', 'topic_diversity', 'content_type_match'
     ]
-    
+
     scaler = StandardScaler()
     X_prep[continuous_cols] = scaler.fit_transform(X_prep[continuous_cols])
-    
+
     return X_prep, scaler
 ```
 
@@ -453,11 +454,11 @@ def prepare_features_xgboost(X: pd.DataFrame) -> pd.DataFrame:
 def prepare_features_neural_network(X: pd.DataFrame) -> tuple:
     """
     Prepare features for neural network
-    
+
     Neural networks need all features normalized to similar scale
     """
     X_prep = X.copy()
-    
+
     # 1. Normalize continuous features
     continuous_cols = [
         'topic_affinity_score', 'creator_authority_score',
@@ -466,12 +467,12 @@ def prepare_features_neural_network(X: pd.DataFrame) -> tuple:
         'quality_score', 'niche_fit', 'consistency_score',
         'predicted_helpfulness', 'topic_diversity', 'content_type_match'
     ]
-    
+
     scaler_continuous = StandardScaler()
     X_prep[continuous_cols] = scaler_continuous.fit_transform(
         X_prep[continuous_cols]
     )
-    
+
     # 2. Normalize binned features to 0-1
     binned_cols = [
         'primary_topic_code', 'num_secondary_topics',
@@ -480,14 +481,14 @@ def prepare_features_neural_network(X: pd.DataFrame) -> tuple:
         'scroll_depth_bin', 'recency_bin', 'session_depth',
         'comment_length_bin'
     ]
-    
+
     scaler_binned = MinMaxScaler()
     X_prep[binned_cols] = scaler_binned.fit_transform(
         X_prep[binned_cols]
     )
-    
+
     # Boolean features already 0/1, no change
-    
+
     return X_prep, (scaler_continuous, scaler_binned)
 ```
 
@@ -501,7 +502,7 @@ def prepare_features_neural_network(X: pd.DataFrame) -> tuple:
 def validate_features(feature_vector: pd.Series) -> bool:
     """
     Validate that extracted features are in expected ranges
-    
+
     Returns True if valid, False with warnings if not
     """
     validation_rules = {
@@ -516,7 +517,7 @@ def validate_features(feature_vector: pd.Series) -> bool:
         'recency_bin': (1, 4, 'int'),
         'session_depth': (1, 10, 'int'),
         'comment_length_bin': (0, 3, 'int'),
-        
+
         # Continuous features should be 0-1
         'topic_affinity_score': (0, 1, 'float'),
         'creator_authority_score': (0, 1, 'float'),
@@ -530,7 +531,7 @@ def validate_features(feature_vector: pd.Series) -> bool:
         'predicted_helpfulness': (0, 1, 'float'),
         'topic_diversity': (0, 1, 'float'),
         'content_type_match': (0, 1, 'float'),
-        
+
         # Boolean features should be 0 or 1
         'is_controversial': (0, 1, 'int'),
         'is_educational': (0, 1, 'int'),
@@ -539,22 +540,22 @@ def validate_features(feature_vector: pd.Series) -> bool:
         'shared': (0, 1, 'int'),
         'exploration_indicator': (0, 1, 'int'),
     }
-    
+
     all_valid = True
-    
+
     for feature, (min_val, max_val, expected_type) in validation_rules.items():
         value = feature_vector[feature]
-        
+
         # Check type
         if expected_type == 'int' and not isinstance(value, (int, np.integer)):
             print(f"⚠️  {feature}: Expected int, got {type(value)}")
             all_valid = False
-        
+
         # Check range
         if value < min_val or value > max_val:
             print(f"⚠️  {feature}: Value {value} outside range [{min_val}, {max_val}]")
             all_valid = False
-    
+
     return all_valid
 ```
 
@@ -633,37 +634,37 @@ import numpy as np
 
 class FeatureExtractor:
     """Complete feature engineering pipeline"""
-    
+
     def __init__(self):
         self.feature_names = None
         self.scaler = None
-    
+
     def extract(self, signal_bundle: dict) -> pd.Series:
         """
         Extract all features from signal bundle
-        
+
         Input: Signal bundle from Week 2 validation
         Output: Feature vector ready for model
         """
         # Handle missing values
         signal_bundle = self._handle_missing(signal_bundle)
-        
+
         # Extract 29 features
         features = {}
         features.update(self._extract_topic(signal_bundle))
         features.update(self._extract_engagement(signal_bundle))
         features.update(self._extract_interaction(signal_bundle))
         features.update(self._extract_quality(signal_bundle))
-        
+
         # Create Series with proper column order
         feature_vector = pd.Series(features)
-        
+
         # Validate ranges
         if not self._validate(feature_vector):
             raise ValueError("Feature validation failed")
-        
+
         return feature_vector
-    
+
     def _handle_missing(self, signal: dict) -> dict:
         """Fill any missing fields with defaults"""
         defaults = {
@@ -672,32 +673,32 @@ class FeatureExtractor:
             # ... full defaults
         }
         return {**defaults, **signal}
-    
+
     def _extract_topic(self, signal: dict) -> dict:
         """Extract 10 topic features"""
         # Implementation from Step 1
         pass
-    
+
     def _extract_engagement(self, signal: dict) -> dict:
         """Extract 8 engagement features"""
         # Implementation from Step 2
         pass
-    
+
     def _extract_interaction(self, signal: dict) -> dict:
         """Extract 6 interaction features"""
         # Implementation from Step 3
         pass
-    
+
     def _extract_quality(self, signal: dict) -> dict:
         """Extract 5 quality features"""
         # Implementation from Step 4
         pass
-    
+
     def _validate(self, feature_vector: pd.Series) -> bool:
         """Validate feature ranges"""
         # Implementation from Section 6
         pass
-    
+
     def normalize(self, X: pd.DataFrame) -> pd.DataFrame:
         """Normalize features for model input"""
         # Implementation from Section 3
@@ -726,4 +727,3 @@ feature_df_normalized = extractor.normalize(feature_df)
 3. **Validate** all features pass range checks
 4. **Normalize** for model input
 5. **Train** ML model (TRAINING_GUIDE.md)
-
