@@ -1,0 +1,418 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Safe Behavioral Signal Bundle",
+  "description": "Schema for aggregated, non-identifiable behavioral signals. All signals binned, aggregated, and safe from re-identification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "signal_id",
+    "signal_timestamp_bin",
+    "topic_signals",
+    "engagement_signals",
+    "interaction_signals",
+    "quality_signals"
+  ],
+  "properties": {
+    "signal_id": {
+      "type": "string",
+      "description": "Ephemeral session identifier (NOT user ID). Expires in 1 hour. Format: random UUID.",
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+    },
+    "signal_timestamp_bin": {
+      "type": "string",
+      "description": "Time bucket (NOT exact timestamp). No minute/second precision.",
+      "enum": [
+        "morning",
+        "afternoon",
+        "evening",
+        "night"
+      ]
+    },
+    "topic_signals": {
+      "type": "object",
+      "description": "Content topic engagement signals (aggregated, categorical).",
+      "additionalProperties": false,
+      "properties": {
+        "primary_topic": {
+          "type": "string",
+          "description": "Top-level topic category (never sub-category).",
+          "enum": [
+            "Technology",
+            "Science",
+            "Business",
+            "Entertainment",
+            "Health",
+            "Politics",
+            "Sports",
+            "Culture",
+            "Education",
+            "Other"
+          ]
+        },
+        "secondary_topics": {
+          "type": "array",
+          "description": "Related topics (unordered set, top-3 only). Order does not matter.",
+          "minItems": 0,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "AI",
+              "Quantum Computing",
+              "Blockchain",
+              "Climate",
+              "Healthcare",
+              "Education",
+              "Finance",
+              "Space",
+              "Renewable Energy",
+              "Cybersecurity",
+              "Other"
+            ]
+          }
+        },
+        "content_depth": {
+          "type": "string",
+          "description": "Content complexity level (aggregated preference).",
+          "enum": [
+            "Beginner",
+            "Intermediate",
+            "Advanced",
+            "Expert"
+          ]
+        },
+        "content_freshness": {
+          "type": "string",
+          "description": "Content publication recency (binned).",
+          "enum": [
+            "Breaking",
+            "Recent",
+            "Standard",
+            "Archived"
+          ]
+        },
+        "content_type": {
+          "type": "string",
+          "description": "Preferred content format.",
+          "enum": [
+            "Article",
+            "Video",
+            "Audio",
+            "Interactive",
+            "Course",
+            "Research"
+          ]
+        },
+        "creator_type": {
+          "type": "string",
+          "description": "Creator/publisher type preference (not specific creator).",
+          "enum": [
+            "Institutional",
+            "Professional Individual",
+            "Academic",
+            "User-Generated",
+            "Government",
+            "Non-profit"
+          ]
+        },
+        "authority_level": {
+          "type": "integer",
+          "description": "Domain authority tier (bucketed 1-4, not continuous).",
+          "minimum": 1,
+          "maximum": 4
+        },
+        "credibility_preference": {
+          "type": "string",
+          "description": "Source credibility preference.",
+          "enum": [
+            "Peer-Reviewed",
+            "Journalistic",
+            "Expert",
+            "User-Generated",
+            "Mixed"
+          ]
+        },
+        "topic_diversity": {
+          "type": "string",
+          "description": "Range of topics interested in (aggregated).",
+          "enum": [
+            "Specialist",
+            "Balanced",
+            "Generalist"
+          ]
+        }
+      }
+    },
+    "engagement_signals": {
+      "type": "object",
+      "description": "Engagement frequency and intensity (binned, aggregated).",
+      "additionalProperties": false,
+      "properties": {
+        "frequency_bin": {
+          "type": "integer",
+          "description": "Engagement frequency bucket (1=very low, 5=very high).",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "engagement_depth": {
+          "type": "string",
+          "description": "How deeply user engages per interaction.",
+          "enum": [
+            "Skimmed",
+            "Browsed",
+            "Read",
+            "Deep_Read"
+          ]
+        },
+        "scroll_depth_decile": {
+          "type": "integer",
+          "description": "Scroll depth as decile (1-10, where 10=scrolled to bottom).",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "completion_percentile": {
+          "type": "integer",
+          "description": "Typical content completion rate (1-10 decile).",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "return_frequency": {
+          "type": "string",
+          "description": "How often returns to topics (bucketed).",
+          "enum": [
+            "One_Time",
+            "Occasional",
+            "Regular",
+            "Frequent"
+          ]
+        },
+        "session_pattern": {
+          "type": "string",
+          "description": "Session engagement pattern type (aggregated behavior).",
+          "enum": [
+            "Daily_Constant",
+            "Bursty",
+            "Episodic",
+            "Dormant"
+          ]
+        },
+        "recency_weight": {
+          "type": "integer",
+          "description": "How much recent engagement is weighted (1=old, 5=very recent).",
+          "minimum": 1,
+          "maximum": 5
+        }
+      }
+    },
+    "interaction_signals": {
+      "type": "object",
+      "description": "Types of interactions user performs (unordered sets, no sequences).",
+      "additionalProperties": false,
+      "properties": {
+        "primary_interactions": {
+          "type": "array",
+          "description": "Main interaction types (unordered set, no sequence).",
+          "minItems": 1,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "View",
+              "Click",
+              "Scroll",
+              "Share",
+              "Like",
+              "Comment",
+              "Bookmark",
+              "Report"
+            ]
+          }
+        },
+        "social_actions": {
+          "type": "array",
+          "description": "Social engagement actions (type only, no targets).",
+          "minItems": 0,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "Like",
+              "Share",
+              "Comment",
+              "Bookmark"
+            ]
+          }
+        },
+        "interaction_intensity": {
+          "type": "string",
+          "description": "Interaction frequency per session (binned).",
+          "enum": [
+            "Passive",
+            "Moderate",
+            "Active",
+            "Highly_Active"
+          ]
+        },
+        "click_pattern": {
+          "type": "string",
+          "description": "Click behavior pattern (aggregated, no sequence).",
+          "enum": [
+            "No_Clicks",
+            "Sparse",
+            "Moderate",
+            "Frequent"
+          ]
+        }
+      }
+    },
+    "quality_signals": {
+      "type": "object",
+      "description": "Quality preferences and affinity signals (aggregated).",
+      "additionalProperties": false,
+      "properties": {
+        "topic_affinity": {
+          "type": "integer",
+          "description": "Affinity for primary topic (1=low, 5=high).",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "format_preference_strength": {
+          "type": "string",
+          "description": "How strongly prefers specific format.",
+          "enum": [
+            "Flexible",
+            "Biased",
+            "Strong",
+            "Exclusive"
+          ]
+        },
+        "quality_preference": {
+          "type": "string",
+          "description": "Preference for content quality level.",
+          "enum": [
+            "High_Authority",
+            "Peer_Reviewed",
+            "Mainstream",
+            "Popular",
+            "Mixed"
+          ]
+        },
+        "complexity_preference": {
+          "type": "string",
+          "description": "Preference for content complexity.",
+          "enum": [
+            "Beginner_Seeking",
+            "Intermediate_Seeking",
+            "Advanced_Seeking",
+            "Expert_Seeking",
+            "Flexible"
+          ]
+        },
+        "niche_preference": {
+          "type": "string",
+          "description": "Mainstream vs niche content preference.",
+          "enum": [
+            "Mainstream_Only",
+            "Mainstream_Biased",
+            "Balanced",
+            "Niche_Biased",
+            "Niche_Only"
+          ]
+        },
+        "engagement_consistency": {
+          "type": "string",
+          "description": "How consistent is engagement pattern.",
+          "enum": [
+            "Stable",
+            "Moderate_Variance",
+            "High_Variance"
+          ]
+        },
+        "topic_consistency": {
+          "type": "string",
+          "description": "How stable are topic interests.",
+          "enum": [
+            "Constant",
+            "Evolving",
+            "Shifting"
+          ]
+        }
+      }
+    },
+    "derived_features": {
+      "type": "object",
+      "description": "Computed aggregate features (optional, for advanced use).",
+      "additionalProperties": false,
+      "properties": {
+        "engagement_trend": {
+          "type": "string",
+          "description": "Trend in engagement levels (aggregated pattern).",
+          "enum": [
+            "Accelerating",
+            "Stable",
+            "Declining"
+          ]
+        },
+        "interest_freshness": {
+          "type": "string",
+          "description": "How recent are interests (rolling window).",
+          "enum": [
+            "Fresh",
+            "Active",
+            "Dormant"
+          ]
+        },
+        "exploration_pattern": {
+          "type": "string",
+          "description": "How user explores new content (aggregated type).",
+          "enum": [
+            "Explorer",
+            "Specialist",
+            "Balanced"
+          ]
+        },
+        "predictability_score": {
+          "type": "integer",
+          "description": "How predictable is user behavior (1=erratic, 5=very predictable).",
+          "minimum": 1,
+          "maximum": 5
+        }
+      }
+    },
+    "safety_metadata": {
+      "type": "object",
+      "description": "Privacy & safety validation metadata (for audit trail).",
+      "additionalProperties": false,
+      "properties": {
+        "aggregation_cohort_size": {
+          "type": "integer",
+          "description": "Approximate cohort size signal aggregated with (must be >= 1000).",
+          "minimum": 1000
+        },
+        "privacy_bucket_size": {
+          "type": "integer",
+          "description": "K-anonymity bucket size for this signal combination.",
+          "minimum": 1000
+        },
+        "contains_exact_values": {
+          "type": "boolean",
+          "description": "False if all values are binned/categorical. Should always be false.",
+          "const": false
+        },
+        "contains_sequences": {
+          "type": "boolean",
+          "description": "False if no temporal sequences present. Should always be false.",
+          "const": false
+        },
+        "contains_pii": {
+          "type": "boolean",
+          "description": "False if no personally identifiable information. Should always be false.",
+          "const": false
+        }
+      }
+    }
+  }
+}
